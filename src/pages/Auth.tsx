@@ -57,49 +57,6 @@ const Auth = () => {
     return true;
   };
 
-  // const handleSubmit = async (e: React.FormEvent) => {
-  //   e.preventDefault();
-
-  //   if (!email || !password || (isSignUp && (!name || !phone))) {
-  //     toast.error("Please fill in all required fields");
-  //     return;
-  //   }
-
-  //   if (password.length < 6) {
-  //     toast.error("Password must be at least 6 characters");
-  //     return;
-  //   }
-
-  //   setSubmitting(true);
-  //   try {
-  //     if (isSignUp) {
-  //       const fullPhone = `${dialCode}${phone.replace(/^0+/, "")}`;
-  //       const { error } = await signUp(email, password, { name, phone: fullPhone });
-  //       if (error) {
-  //         if (error.message.includes("already registered")) {
-  //           toast.error("This email is already registered. Try signing in.");
-  //         } else {
-  //           toast.error(error.message);
-  //         }
-  //         return;
-  //       }
-  //       // Send OTP for verification
-  //       setPendingAction("signup");
-  //       await sendOtp();
-  //       setOtpStep(true);
-  //     } else {
-  //       const { error } = await signIn(email, password);
-  //       if (error) {
-  //         toast.error(error.message);
-  //         return;
-  //       }
-  //       // Login successful — redirect happens via auth state change
-  //     }
-  //   } finally {
-  //     setSubmitting(false);
-  //   }
-  // };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -189,7 +146,7 @@ const Auth = () => {
             Xend<span className="text-primary">App</span>
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Send & receive stablecoins instantly
+            Send & receive USD instantly
           </p>
         </div>
 

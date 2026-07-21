@@ -346,7 +346,7 @@ const Dashboard = () => {
             <DrawerDescription>Send money globally</DrawerDescription>
           </DrawerHeader>
           <div className="px-4 pb-6 pt-2 overflow-y-auto">
-            <GlobalTransferForm onClose={() => setGlobalTransferOpen(false)} balance={totalStable} />
+            <GlobalTransferForm onClose={() => setGlobalTransferOpen(false)} balance={totalStable} onSendCrypto={wallet.sendTokens} />
           </div>
         </DrawerContent>
       </Drawer>

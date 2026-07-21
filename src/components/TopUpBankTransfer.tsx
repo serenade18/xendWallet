@@ -4,11 +4,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { noahApi, NoahApiError, type NoahPayinResult } from "@/lib/noah-api";
+import { toNoahNetwork, type ChainConfig } from "@/lib/chains";
 
 type Step = "currency" | "loading" | "details" | "kyc-required";
 
 interface TopUpBankTransferProps {
   userEmail?: string;
+  /** The wallet's actual chain + address — required so the payin's network
+   * and destinationAddress always match (a mismatch here is a likely cause
+   * of Noah/Portal rejecting the request). */
+  chain: ChainConfig;
+  walletAddress: string;
   onClose: () => void;
 }
 
@@ -24,7 +30,7 @@ const CURRENCIES: { code: string; label: string; flag: string }[] = [
  * withdrawals — Noah requires an approved customer before assigning an
  * account.
  */
-const TopUpBankTransfer = ({ userEmail = "", onClose }: TopUpBankTransferProps) => {
+const TopUpBankTransfer = ({ userEmail = "", chain, walletAddress, onClose }: TopUpBankTransferProps) => {
   const [step, setStep] = useState<Step>("currency");
   const [fiatCurrency, setFiatCurrency] = useState<string>("USD");
   const [bankDetails, setBankDetails] = useState<NoahPayinResult["data"]["bankDetails"] | null>(null);
@@ -51,9 +57,19 @@ const TopUpBankTransfer = ({ userEmail = "", onClose }: TopUpBankTransferProps) 
 
   const handleSelectCurrency = async (code: string) => {
     setFiatCurrency(code);
+    if (!walletAddress) {
+      toast.error("Your wallet isn't ready yet — try again in a moment.");
+      setStep("currency");
+      return;
+    }
     setStep("loading");
     try {
-      const res = await noahApi.initiatePayin({ fiatCurrency: code, cryptoCurrency: "USDC" });
+      const res = await noahApi.initiatePayin({
+        fiatCurrency: code,
+        cryptoCurrency: "USDC",
+        network: toNoahNetwork(chain),
+        destinationAddress: walletAddress,
+      });
       setBankDetails(res.data.bankDetails);
       setStep("details");
     } catch (err: any) {
@@ -76,9 +92,9 @@ const TopUpBankTransfer = ({ userEmail = "", onClose }: TopUpBankTransferProps) 
     setSimulating(true);
     try {
       await noahApi.simulateDeposit({
-        PaymentMethodID: bankDetails.paymentMethodId,
-        FiatAmount: simAmount,
-        FiatCurrency: fiatCurrency,
+        paymentMethodId: bankDetails.paymentMethodId,
+        fiatAmount: simAmount,
+        fiatCurrency: fiatCurrency,
       });
       toast.success("Deposit simulated — your wallet will credit shortly");
       setSimAmount("");

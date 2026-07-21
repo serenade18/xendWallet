@@ -82,3 +82,20 @@ export function validateAddress(address: string, chain: ChainConfig): boolean {
       return false;
   }
 }
+
+/**
+ * Portal's Noah integration only accepts a specific set of CAIP-2 network
+ * strings (see docs.portalhq.io/integrations/On-Off-Ramp/noah — "Supported
+ * networks"). Our eip155 chain IDs already match that table exactly, but
+ * Solana doesn't: we key chains by full genesis hash (`solana:EtWT...`)
+ * while Noah expects the short alias (`solana:devnet` / `solana:mainnet`).
+ * Passing the wrong string here is a likely cause of Noah/Portal rejecting
+ * payin/payout requests outright.
+ */
+export function toNoahNetwork(chain: ChainConfig): string {
+  if (chain.type === "solana") {
+    return chain.key.includes("devnet") ? "solana:devnet" : "solana:mainnet";
+  }
+  // eip155 chain IDs are already in the exact form Portal's Noah table expects.
+  return chain.chainId;
+}

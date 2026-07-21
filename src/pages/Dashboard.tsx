@@ -1,5 +1,6 @@
 import { useState } from "react";
 import TopUpBankTransfer from "@/components/TopUpBankTransfer";
+import { DEFAULT_CHAIN } from "@/lib/chains";
 import WithdrawMobileMoney from "@/components/WithdrawMobileMoney";
 import WithdrawBank from "@/components/WithdrawBank";
 import WithdrawCrypto from "@/components/WithdrawCrypto";
@@ -325,7 +326,12 @@ const Dashboard = () => {
           <div className="px-4 pb-6 pt-2 overflow-y-auto">
             {bankTransferOpen && (
               <KycGate ctaLabel="Verify to top up">
-                <TopUpBankTransfer userEmail={user?.email || ""} onClose={() => setBankTransferOpen(false)} />
+                <TopUpBankTransfer
+                  userEmail={user?.email || ""}
+                  chain={DEFAULT_CHAIN}
+                  walletAddress={wallet.profile?.wallet_address || ""}
+                  onClose={() => setBankTransferOpen(false)}
+                />
               </KycGate>
             )}
           </div>

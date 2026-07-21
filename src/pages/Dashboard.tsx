@@ -1,5 +1,4 @@
 import { useState } from "react";
-import TopUpMobileMoney from "@/components/TopUpMobileMoney";
 import TopUpBankTransfer from "@/components/TopUpBankTransfer";
 import WithdrawMobileMoney from "@/components/WithdrawMobileMoney";
 import WithdrawBank from "@/components/WithdrawBank";
@@ -40,7 +39,6 @@ const Dashboard = () => {
   const [sendFormOpen, setSendFormOpen] = useState(false);
   const [walletSendOpen, setWalletSendOpen] = useState(false);
   const [depositOpen, setDepositOpen] = useState(false);
-  const [mobileMoneyOpen, setMobileMoneyOpen] = useState(false);
   const [bankTransferOpen, setBankTransferOpen] = useState(false);
   const [withdrawMobileOpen, setWithdrawMobileOpen] = useState(false);
   const [withdrawBankOpen, setWithdrawBankOpen] = useState(false);
@@ -135,18 +133,6 @@ const Dashboard = () => {
             <DrawerDescription className="sr-only">Choose a funding method</DrawerDescription>
           </DrawerHeader>
           <div className="px-4 pb-8 space-y-3">
-            <button onClick={() => { setTopUpOpen(false); setTimeout(() => setMobileMoneyOpen(true), 200); }}
-              className="w-full flex items-center gap-4 rounded-2xl bg-card border border-border/60 px-5 py-4 active:scale-[0.98] transition-all">
-              <div className="h-12 w-12 rounded-full bg-primary/20 flex items-center justify-center">
-                <Smartphone className="h-6 w-6 text-primary" />
-              </div>
-              <div className="flex-1 text-left">
-                <p className="text-[15px] font-semibold text-foreground">Mobile Money <span className="text-xs font-normal text-muted-foreground">(Instant)</span></p>
-                <p className="text-[13px] text-muted-foreground">Top up via supported mobile wallets globally</p>
-              </div>
-              <ChevronRight className="h-5 w-5 text-muted-foreground" />
-            </button>
-
             <button onClick={() => { setTopUpOpen(false); toast.info("Debit card payments coming soon!"); }}
               className="w-full flex items-center gap-4 rounded-2xl bg-card border border-border/60 px-5 py-4 active:scale-[0.98] transition-all">
               <div className="h-12 w-12 rounded-full bg-accent/20 flex items-center justify-center">
@@ -177,8 +163,8 @@ const Dashboard = () => {
                 <Landmark className="h-6 w-6 text-muted-foreground" />
               </div>
               <div className="flex-1 text-left">
-                <p className="text-[15px] font-semibold text-foreground">Bank Transfer <span className="text-xs font-normal text-muted-foreground">(2-3 Days)</span></p>
-                <p className="text-[13px] text-muted-foreground">Via supported countries and banks globally</p>
+                <p className="text-[15px] font-semibold text-foreground">Bank Transfer <span className="text-xs font-normal text-muted-foreground">(Auto-credited)</span></p>
+                <p className="text-[13px] text-muted-foreground">Get a dedicated virtual account in USD or EUR</p>
               </div>
               <ChevronRight className="h-5 w-5 text-muted-foreground" />
             </button>
@@ -325,25 +311,6 @@ const Dashboard = () => {
             <WalletSendForm onSend={wallet.sendTokens} loading={wallet.actionLoading}
               activeChain={wallet.activeChain} tokens={wallet.activeChain.tokens}
               onClose={() => setWalletSendOpen(false)} balance={totalStable} />
-          </div>
-        </DrawerContent>
-      </Drawer>
-
-      {/* Mobile Money Top Up */}
-      <Drawer open={mobileMoneyOpen} onOpenChange={setMobileMoneyOpen}>
-        <DrawerContent className="max-w-lg mx-auto max-h-[90dvh]">
-          <DrawerHeader className="sr-only">
-            <DrawerTitle>Mobile Money Top Up</DrawerTitle>
-            <DrawerDescription>Add money via mobile money</DrawerDescription>
-          </DrawerHeader>
-          <div className="px-4 pb-6 pt-2 overflow-y-auto">
-            {mobileMoneyOpen && (
-              <KycGate ctaLabel="Verify to top up">
-                <TopUpMobileMoney walletBalance={totalStable} userName={user?.user_metadata?.name}
-                  userPhone={user?.user_metadata?.phone || user?.phone || (wallet.profile as any)?.phone || ""}
-                  onClose={() => setMobileMoneyOpen(false)} />
-              </KycGate>
-            )}
           </div>
         </DrawerContent>
       </Drawer>

@@ -81,6 +81,11 @@ async function getAuthHeaders() {
 
 const BASE = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
 
+// Module-level in-flight lock so multiple call sites (useAuth firing on
+// session, useWallet firing on mount, etc.) collapse into a single
+// createClient → createWallet → backup sequence instead of racing.
+let provisioningPromise: Promise<void> | null = null;
+
 export const portalApi = {
   async createClient(): Promise<PortalClientResult> {
     const headers = await getAuthHeaders();
@@ -233,5 +238,28 @@ export const portalApi = {
       throw new Error(err.error || "Failed to backup wallet");
     }
     return res.json();
+  },
+
+  /**
+   * Provisions the Portal client + wallet in the background as soon as a
+   * session exists, so the person can start sending/receiving the moment
+   * they land on the dashboard. Safe to call from multiple places — every
+   * caller shares the same in-flight request instead of racing, and the
+   * underlying edge functions are idempotent (no-op if already set up).
+   */
+  ensureWalletReady(): Promise<void> {
+    if (provisioningPromise) return provisioningPromise;
+    provisioningPromise = (async () => {
+      await portalApi.createClient();
+      await portalApi.createWallet();
+      try {
+        await portalApi.backupWallet();
+      } catch (e) {
+        console.error("Auto-backup failed (non-blocking):", e);
+      }
+    })().finally(() => {
+      provisioningPromise = null;
+    });
+    return provisioningPromise;
   },
 };

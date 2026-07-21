@@ -65,12 +65,7 @@ export function useWallet(userId: string | undefined) {
     setProvisioning(true);
     setProvisionError(null);
     try {
-      await portalApi.createClient();
-      await portalApi.createWallet();
-      // Auto-backup right away too — never block on this.
-      portalApi.backupWallet().catch((e) =>
-        console.error("Auto-backup failed (non-blocking):", e)
-      );
+      await portalApi.ensureWalletReady();
       await fetchProfile();
     } catch (e: any) {
       console.error("Auto-provisioning failed:", e);

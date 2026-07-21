@@ -1,0 +1,13 @@
+project_id = "olpnzanuqpxqvqwpaoqy"
+
+[functions.portal-client]
+verify_jwt = false
+
+[functions.portal-wallet]
+verify_jwt = false
+
+[functions.portal-payout]
+verify_jwt = false
+
+[functions.portal-backup-webhook]
+verify_jwt = false

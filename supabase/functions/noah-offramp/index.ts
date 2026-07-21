@@ -512,18 +512,50 @@ serve(async (req) => {
       const gate = await requireKyc();
       if (gate) return gate;
       const body = await req.json();
-      const res = await fetch(`${noahBase}/payins`, {
+
+      const requestedCrypto = body.cryptoCurrency || "USDC";
+      const altCrypto = requestedCrypto.endsWith("_TEST")
+        ? requestedCrypto.replace(/_TEST$/, "")
+        : `${requestedCrypto}_TEST`;
+
+      const buildBody = (crypto: string) => JSON.stringify({
+        fiatCurrency: body.fiatCurrency,
+        cryptoCurrency: crypto,
+        network: body.network || "solana:devnet",
+        destinationAddress: body.destinationAddress || profile.wallet_address,
+      });
+
+      let res = await fetch(`${noahBase}/payins`, {
         method: "POST",
         headers: noahHeaders,
-        body: JSON.stringify({
-          fiatCurrency: body.fiatCurrency,
-          cryptoCurrency: body.cryptoCurrency || "USDC",
-          network: body.network || "solana:devnet",
-          destinationAddress: body.destinationAddress || profile.wallet_address,
-        }),
+        body: buildBody(requestedCrypto),
       });
-      const data = await res.json();
-      if (!res.ok) return json({ error: data.message || "Failed to initiate payin" }, res.status);
+      let data = await res.json().catch(() => ({}));
+
+      // Sandbox often expects the _TEST suffix on the crypto ticker — retry
+      // once with the flipped suffix before giving up.
+      if (!res.ok && (res.status === 400 || res.status === 403)) {
+        console.log("initiate-payin primary failed, retrying with", altCrypto, JSON.stringify(data).slice(0, 300));
+        const res2 = await fetch(`${noahBase}/payins`, {
+          method: "POST",
+          headers: noahHeaders,
+          body: buildBody(altCrypto),
+        });
+        const data2 = await res2.json().catch(() => ({}));
+        if (res2.ok) {
+          return json(data2);
+        }
+        res = res2;
+        data = data2;
+      }
+
+      if (!res.ok) {
+        console.error("initiate-payin error", res.status, JSON.stringify(data));
+        return json(
+          { error: data.message || data.error || "Failed to initiate payin", details: data },
+          res.status,
+        );
+      }
       return json(data);
     }
 

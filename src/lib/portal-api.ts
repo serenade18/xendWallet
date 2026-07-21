@@ -85,6 +85,11 @@ const BASE = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
 // session, useWallet firing on mount, etc.) collapse into a single
 // createClient → createWallet → backup sequence instead of racing.
 let provisioningPromise: Promise<void> | null = null;
+// Once we've confirmed the wallet is set up (or just finished setting it
+// up), never call the create endpoints again for the rest of this page
+// load — auth events like TOKEN_REFRESHED fire repeatedly and shouldn't
+// each trigger a network round-trip.
+let provisioningConfirmed = false;
 
 export const portalApi = {
   async createClient(): Promise<PortalClientResult> {
@@ -248,6 +253,7 @@ export const portalApi = {
    * underlying edge functions are idempotent (no-op if already set up).
    */
   ensureWalletReady(): Promise<void> {
+    if (provisioningConfirmed) return Promise.resolve();
     if (provisioningPromise) return provisioningPromise;
     provisioningPromise = (async () => {
       await portalApi.createClient();
@@ -257,6 +263,7 @@ export const portalApi = {
       } catch (e) {
         console.error("Auto-backup failed (non-blocking):", e);
       }
+      provisioningConfirmed = true;
     })().finally(() => {
       provisioningPromise = null;
     });

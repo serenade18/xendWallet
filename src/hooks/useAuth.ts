@@ -12,10 +12,13 @@ export function useAuth() {
     // Fires the moment a session exists — including right after signUp(),
     // before the OTP step even finishes — so the Portal client + wallet are
     // usually already provisioned by the time the person reaches the
-    // dashboard. Idempotent and deduped, so it's safe alongside useWallet's
-    // own call to the same ensureWalletReady().
-    const maybeProvision = (session: Session | null) => {
-      if (session?.user) {
+    // dashboard. Idempotent and deduped (ensureWalletReady short-circuits
+    // after the first successful run), so this is safe alongside useWallet's
+    // own call to the same function, and won't re-fire on routine events
+    // like TOKEN_REFRESHED once the wallet is confirmed set up.
+    const PROVISION_EVENTS = new Set(["SIGNED_IN", "INITIAL_SESSION", "USER_UPDATED"]);
+    const maybeProvision = (event: string, session: Session | null) => {
+      if (session?.user && PROVISION_EVENTS.has(event)) {
         portalApi.ensureWalletReady().catch((e) =>
           console.error("Background wallet provisioning failed:", e)
         );
@@ -23,11 +26,11 @@ export function useAuth() {
     };
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
-        maybeProvision(session);
+        maybeProvision(event, session);
       }
     );
 
@@ -35,7 +38,7 @@ export function useAuth() {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
-      maybeProvision(session);
+      maybeProvision("INITIAL_SESSION", session);
     });
 
     return () => subscription.unsubscribe();

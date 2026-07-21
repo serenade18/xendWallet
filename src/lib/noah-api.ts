@@ -16,12 +16,14 @@ export class NoahApiError extends Error {
   code?: string;
   status?: string;
   httpStatus: number;
-  constructor(message: string, httpStatus: number, code?: string, status?: string) {
+  details?: any;
+  constructor(message: string, httpStatus: number, code?: string, status?: string, details?: any) {
     super(message);
     this.name = "NoahApiError";
     this.code = code;
     this.status = status;
     this.httpStatus = httpStatus;
+    this.details = details;
   }
   get isKycRequired() {
     return this.code === "KYC_REQUIRED";
@@ -38,7 +40,8 @@ async function noahFetch(action: string, opts?: { method?: string; body?: any; p
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: "Request failed" }));
-    throw new NoahApiError(err.error || `Noah API error [${res.status}]`, res.status, err.code, err.status);
+    console.error(`Noah API error [${action}]:`, err);
+    throw new NoahApiError(err.error || `Noah API error [${res.status}]`, res.status, err.code, err.status, err.details);
   }
   return res.json();
 }
